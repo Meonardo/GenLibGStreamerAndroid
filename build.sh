@@ -1,32 +1,60 @@
+export PATH=/home/meonardo/Android/gstreamer/old/cerbero/build/android-ndk-21:$PATH
+export TARGET_ARCH_ABI=arm64-v8a
+export GSTREAMER_ROOT_ANDROID=/home/meonardo/Android/gstreamer/tmp/gst-build
+
 if [[ -z "${GSTREAMER_ROOT_ANDROID}" ]]; then
   echo "You must define an environment variable called GSTREAMER_ROOT_ANDROID and point it to the folder where you extracted the GStreamer binaries"
   exit 1
 fi
 
-VERSION=1.18.6
+VERSION=1.22.2
 DATE=`date "+%Y%m%d-%H%M%S"`
 
 rm -rf out
 mkdir out
 
-for TARGET in armv7 arm64 x86 x86_64
+
+GST_TAR_FILE_PATH=$GSTREAMER_ROOT_ANDROID/../../old/cerbero/gstreamer-1.0-android-arm64-1.22.2.tar.xz
+if [ -f "$GST_TAR_FILE_PATH" ]; then
+    echo "File $GST_TAR_FILE_PATH exists, remove it first."
+    # remove old gst-build lib directory
+    rm -fr $GSTREAMER_ROOT_ANDROID/arm64-v8a
+    mkdir $GSTREAMER_ROOT_ANDROID/arm64-v8a
+    tar -xvf $GST_TAR_FILE_PATH -C $GSTREAMER_ROOT_ANDROID/arm64-v8a
+else 
+    echo "File $GST_TAR_FILE_PATH does not exist."
+fi
+
+# copy drm, mpp & rga
+echo "copy dependencies..."
+echo "copy mpp"
+cp $GSTREAMER_ROOT_ANDROID/mpp/lib/pkgconfig/rockchip_vpu.pc $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib/pkgconfig
+cp $GSTREAMER_ROOT_ANDROID/mpp/lib/pkgconfig/rockchip_mpp.pc $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib/pkgconfig
+cp $GSTREAMER_ROOT_ANDROID/mpp/lib/librockchip_vpu.so $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib
+cp $GSTREAMER_ROOT_ANDROID/mpp/lib/librockchip_mpp.so $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib
+
+echo "copy drm"
+cp $GSTREAMER_ROOT_ANDROID/drm/lib/pkgconfig/libdrm.pc $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib/pkgconfig
+cp $GSTREAMER_ROOT_ANDROID/drm/lib/libdrm.so $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib
+
+echo "copy rga"
+cp $GSTREAMER_ROOT_ANDROID/rga/lib/pkgconfig/librga.pc $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib/pkgconfig
+cp $GSTREAMER_ROOT_ANDROID/rga/lib/librga.so $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib
+echo "done copy dependencies\n\n"
+
+for TARGET in arm64
 do
   NDK_APPLICATION_MK="jni/${TARGET}.mk"
   echo "\n\n=== Building GStreamer ${VERSION} for target ${TARGET} with ${NDK_APPLICATION_MK} ==="
 
-  ndk-build NDK_APPLICATION_MK=$NDK_APPLICATION_MK
+  ndk-build NDK_DEBUG=1 NDK_APPLICATION_MK=$NDK_APPLICATION_MK
 
-  if [ $TARGET = "armv7" ]; then
-    LIB="armeabi-v7a"
-  elif [ $TARGET = "arm64" ]; then
+  if [ $TARGET = "arm64" ]; then
       LIB="arm64-v8a"
-  elif [ $TARGET = "x86_64" ]; then
-    LIB="x86_64"
-  else
-    LIB="x86"
   fi;
 
   GST_LIB="gst-build-${LIB}"
+  mkdir ${GST_LIB}
 
   cp -r libs/${LIB}/libgstreamer_android.so ${GST_LIB}
   cp -r $GSTREAMER_ROOT_ANDROID/${LIB}/lib/pkgconfig ${GST_LIB}
@@ -40,10 +68,15 @@ do
   rm -rf pkgconfig/*pc-e*
   cd ..
   mkdir -p out/Gstreamer-$VERSION/$LIB/lib/
-  cp -r $GST_LIB/libgstreamer_android.so  out/Gstreamer/$LIB/lib/
+  cp -r $GST_LIB/libgstreamer_android.so  out/Gstreamer-$VERSION/$LIB/lib/
   rm -rf $GST_LIB
 done
 
 rm -rf libs obj src
+
+# copy to Windows local file system
+TARGET_PATH=/mnt/d/File/Android/GStreamerAndroid/gstreamer/src/main/cpp/gstreamer-$VERSION/arm64-v8a/lib/Debug
+echo "copy libgstreamer_android.so to Windows file system at $TARGET_PATH"
+cp gst-android-build/arm64-v8a/libgstreamer_android.so $TARGET_PATH
 
 echo "\n*** Done ***\n`ls out`"

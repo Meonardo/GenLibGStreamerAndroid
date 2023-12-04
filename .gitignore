@@ -7,3 +7,5 @@ obj/
 src/
 out/
 .idea/
+
+gst-android-build/
