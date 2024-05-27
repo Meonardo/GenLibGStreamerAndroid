@@ -63,7 +63,7 @@ done
 rm -rf libs obj src
 
 # copy to Windows local file system
-TARGET_PATH=/mnt/d/File/Android/GStreamerAndroid/gstreamer/src/main/cpp/gstreamer-$VERSION/arm64-v8a/lib/Debug
+TARGET_PATH=/mnt/d/File/Android/GStreamerAndroid/gstreamer/src/main/cpp/deps/gstreamer-$VERSION/arm64-v8a/lib/Debug
 echo "copy libgstreamer_android.so to Windows file system at $TARGET_PATH"
 cp gst-android-build/arm64-v8a/libgstreamer_android.so $TARGET_PATH
 
