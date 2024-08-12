@@ -1,4 +1,6 @@
-export PATH=/home/meonardo/Android/gstreamer/1.22.9/cerbero/build/android-ndk-21:$PATH
+VERSION=1.22.2
+
+export PATH=/home/meonardo/Android/gstreamer/$VERSION/cerbero/build/android-ndk-25:$PATH
 export TARGET_ARCH_ABI=arm64-v8a
 export GSTREAMER_ROOT_ANDROID=/home/meonardo/Android/gstreamer/tmp/gst-build
 
@@ -7,7 +9,6 @@ if [[ -z "${GSTREAMER_ROOT_ANDROID}" ]]; then
   exit 1
 fi
 
-VERSION=1.22.9
 DATE=`date "+%Y%m%d-%H%M%S"`
 
 rm -rf out
@@ -25,17 +26,12 @@ else
     echo "File $GST_TAR_FILE_PATH does not exist."
 fi
 
-# echo "copy drm"
-cp $GSTREAMER_ROOT_ANDROID/new/drm/lib/pkgconfig/libdrm.pc $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib/pkgconfig
-cp $GSTREAMER_ROOT_ANDROID/new/drm/lib/libdrm.so $GSTREAMER_ROOT_ANDROID/arm64-v8a/lib
-
-
 for TARGET in arm64
 do
   NDK_APPLICATION_MK="jni/${TARGET}.mk"
   echo "\n\n=== Building GStreamer ${VERSION} for target ${TARGET} with ${NDK_APPLICATION_MK} ==="
 
-  ndk-build NDK_DEBUG=1 NDK_APPLICATION_MK=$NDK_APPLICATION_MK
+  ndk-build NDK_DEBUG=0 NDK_APPLICATION_MK=$NDK_APPLICATION_MK
 
   if [ $TARGET = "arm64" ]; then
       LIB="arm64-v8a"
